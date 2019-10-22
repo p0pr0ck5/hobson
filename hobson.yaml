@@ -1,0 +1,5 @@
+bind: :5300
+zone: foo
+services:
+  - consul
+  - web
