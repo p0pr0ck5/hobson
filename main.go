@@ -74,6 +74,7 @@ func main() {
 	srv.Handler = h
 
 	go func() {
+		log.Println("Answer queries for zone", config.Zone)
 		log.Println("Starting DNS server on", config.Bind)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Fatalf("Failed to set udp listener %s\n", err.Error())
@@ -92,7 +93,6 @@ func main() {
 	go func() {
 		for {
 			a := <-notify
-
 			t := a.Addresses
 
 			if len(t) == 0 {
