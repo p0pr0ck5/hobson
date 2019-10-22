@@ -36,6 +36,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		address, ok := h.svcMap[domain]
 		h.RUnlock()
 		if !ok {
+			msg.SetRcode(r, dns.RcodeNameError)
 			break
 		}
 
