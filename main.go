@@ -94,6 +94,12 @@ func main() {
 			a := <-notify
 
 			t := a.Addresses
+
+			if len(t) == 0 {
+				log.Printf("No records for service %q", a.Service)
+				continue
+			}
+
 			sort.Strings(t)
 			h.Lock()
 			log.Printf("Updating service map record %s (%s)", a.Service, t[0])
