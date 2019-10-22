@@ -33,9 +33,7 @@ func main() {
 	}
 
 	srv := &dns.Server{Addr: config.Bind, Net: "udp"}
-	h := &DNSHandler{
-		svcMap: make(map[string]string),
-	}
+	h := NewDNSHandler(config.Zone)
 	srv.Handler = h
 
 	go func() {
@@ -66,10 +64,7 @@ func main() {
 			}
 
 			sort.Strings(t)
-			h.Lock()
-			log.Printf("Updating service map record %s (%s)", a.Service, t[0])
-			h.svcMap[a.Service+"."+config.Zone+"."] = t[0]
-			h.Unlock()
+			h.UpdateRecord(a.Service, t[0])
 		}
 	}()
 

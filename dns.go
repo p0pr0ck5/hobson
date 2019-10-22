@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net"
 	"sync"
 
@@ -10,7 +12,16 @@ import (
 type DNSHandler struct {
 	sync.RWMutex
 
+	zone string
+
 	svcMap map[string]string
+}
+
+func NewDNSHandler(zone string) *DNSHandler {
+	return &DNSHandler{
+		zone:   zone,
+		svcMap: make(map[string]string),
+	}
 }
 
 func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
@@ -39,4 +50,12 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		})
 	}
 	w.WriteMsg(&msg)
+}
+
+func (h *DNSHandler) UpdateRecord(service, record string) {
+	log.Printf("Updating service map record %s (%s)", service, record)
+
+	h.Lock()
+	h.svcMap[fmt.Sprintf("%s.%s.", service, h.zone)] = record
+	h.Unlock()
 }
