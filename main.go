@@ -64,7 +64,7 @@ func main() {
 			}
 
 			sort.Strings(t)
-			h.UpdateRecord(a.Service, t[0])
+			h.UpdateRecord(a.Service, t)
 		}
 	}()
 

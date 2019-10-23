@@ -53,10 +53,20 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(&msg)
 }
 
-func (h *DNSHandler) UpdateRecord(service, record string) {
-	log.Printf("Updating service map record %s (%s)", service, record)
-
+func (h *DNSHandler) UpdateRecord(service string, records []string) {
 	h.Lock()
-	h.svcMap[fmt.Sprintf("%s.%s.", service, h.zone)] = record
-	h.Unlock()
+	defer h.Unlock()
+
+	rec := fmt.Sprintf("%s.%s.", service, h.zone)
+	cur := h.svcMap[rec]
+
+	for _, record := range records {
+		if cur == record {
+			return
+		}
+	}
+
+	newRecord := records[0]
+	log.Printf("Updating service map record %s (%s)", service, newRecord)
+	h.svcMap[rec] = newRecord
 }
