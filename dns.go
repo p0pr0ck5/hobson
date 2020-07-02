@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
+	"sort"
 	"sync"
 
 	"github.com/miekg/dns"
@@ -15,6 +17,8 @@ type dnsHandler struct {
 	zone string
 
 	svcMap map[string]string
+
+	shutdownCh chan struct{}
 }
 
 func newDNSHandler(zone string) *dnsHandler {
@@ -51,6 +55,31 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		})
 	}
 	w.WriteMsg(&msg)
+}
+
+func (h *dnsHandler) Watch(notify <-chan *recordEntry) {
+	for {
+		select {
+		case <-h.shutdownCh:
+			return
+		default:
+			a := <-notify
+			t := a.Addresses
+
+			if len(t) == 0 {
+				log.Printf("No records for service %q", a.Service)
+				continue
+			}
+
+			sort.Strings(t)
+			h.UpdateRecord(a.Service, t)
+		}
+	}
+}
+
+func (h *dnsHandler) Shutdown(ctx context.Context) error {
+	close(h.shutdownCh)
+	return nil
 }
 
 func (h *dnsHandler) UpdateRecord(service string, records []string) {

@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -44,29 +43,17 @@ func main() {
 		}
 	}()
 
-	svcs := config.Services
 	notify := make(chan *recordEntry)
-	for _, svc := range svcs {
-		go monitor(svc, notify)
+	m, err := newMonitor(config.Services)
+	if err != nil {
+		log.Fatalln("Failed to setup monitor:", err)
 	}
 
 	log.Printf("Beginning monitoring of Consul services (%s)",
 		strings.Join(config.Services, ","))
 
-	go func() {
-		for {
-			a := <-notify
-			t := a.Addresses
-
-			if len(t) == 0 {
-				log.Printf("No records for service %q", a.Service)
-				continue
-			}
-
-			sort.Strings(t)
-			h.UpdateRecord(a.Service, t)
-		}
-	}()
+	m.Run(notify)
+	h.Watch(notify)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
@@ -84,6 +71,22 @@ func main() {
 			defer wg.Done()
 			if err := srv.ShutdownContext(ctx); err != nil {
 				log.Println("Error shutting down DNS server:", err)
+			}
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := h.Shutdown(ctx); err != nil {
+				log.Println("Error shutting down DNS handler:", err)
+			}
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := m.Shutdown(ctx); err != nil {
+				log.Println("Error shutting down monitor:", err)
 			}
 		}()
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"math"
 	"time"
@@ -11,14 +12,35 @@ import (
 const backoffMax = 30000
 const backoffBase = 500
 
-func monitor(svc string, notify chan<- *recordEntry) {
+type monitor struct {
+	Services []string
+
+	client *api.Client
+
+	shutdownCh chan struct{}
+}
+
+func newMonitor(services []string) (*monitor, error) {
+	client, err := api.NewClient(api.DefaultConfig())
+	if err != nil {
+		return nil, err
+	}
+
+	m := &monitor{
+		Services: services,
+		client:   client,
+	}
+
+	return m, nil
+}
+
+func (m *monitor) monitorService(service string, notify chan<- *recordEntry) {
 	var wait, n uint64
 
 	for {
 		var a []string
 
-		client, _ := api.NewClient(api.DefaultConfig())
-		svcs, meta, err := client.Health().Service(svc, "", true, &api.QueryOptions{
+		svcs, meta, err := m.client.Health().Service(service, "", true, &api.QueryOptions{
 			WaitIndex: wait,
 		})
 		if err != nil {
@@ -40,7 +62,18 @@ func monitor(svc string, notify chan<- *recordEntry) {
 
 		notify <- &recordEntry{
 			Addresses: a,
-			Service:   svc,
+			Service:   service,
 		}
 	}
+}
+
+func (m *monitor) Run(notify chan<- *recordEntry) {
+	for _, svc := range m.Services {
+		go m.monitorService(svc, notify)
+	}
+}
+
+func (m *monitor) Shutdown(ctx context.Context) error {
+	close(m.shutdownCh)
+	return nil
 }
