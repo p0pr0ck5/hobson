@@ -11,7 +11,7 @@ import (
 const backoffMax = 30000
 const backoffBase = 500
 
-func monitor(svc string, notify chan<- *RecordEntry) {
+func monitor(svc string, notify chan<- *recordEntry) {
 	var wait, n uint64
 
 	for {
@@ -23,7 +23,7 @@ func monitor(svc string, notify chan<- *RecordEntry) {
 		})
 		if err != nil {
 			log.Println(err)
-			n += 1
+			n++
 			sleep := math.Min(math.Pow(2, float64(n))*backoffBase, backoffMax)
 			time.Sleep(time.Millisecond * time.Duration(sleep))
 			continue
@@ -38,7 +38,7 @@ func monitor(svc string, notify chan<- *RecordEntry) {
 			a = append(a, svc.Node.Address)
 		}
 
-		notify <- &RecordEntry{
+		notify <- &recordEntry{
 			Addresses: a,
 			Service:   svc,
 		}

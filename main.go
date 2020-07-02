@@ -15,7 +15,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-type RecordEntry struct {
+type recordEntry struct {
 	Addresses []string
 	Service   string
 }
@@ -27,13 +27,13 @@ func main() {
 		log.Fatalln("-config must be set")
 	}
 
-	config, err := LoadConfig(*configPath)
+	config, err := loadConfig(*configPath)
 	if err != nil {
 		log.Fatalln("Error loading config:", err)
 	}
 
 	srv := &dns.Server{Addr: config.Bind, Net: "udp"}
-	h := NewDNSHandler(config.Zone)
+	h := newDNSHandler(config.Zone)
 	srv.Handler = h
 
 	go func() {
@@ -45,7 +45,7 @@ func main() {
 	}()
 
 	svcs := config.Services
-	notify := make(chan *RecordEntry)
+	notify := make(chan *recordEntry)
 	for _, svc := range svcs {
 		go monitor(svc, notify)
 	}

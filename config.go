@@ -3,17 +3,18 @@ package main
 import (
 	"errors"
 
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 )
 
-type Config struct {
+type config struct {
 	Bind     string   `yaml:"bind"`
 	Zone     string   `yaml:"zone"`
 	Services []string `yaml:"services"`
 }
 
-func validateConfig(c *Config) error {
+func validateConfig(c *config) error {
 	if c.Bind == "" {
 		return errors.New("'Bind' is not set")
 	}
@@ -29,13 +30,13 @@ func validateConfig(c *Config) error {
 	return nil
 }
 
-func LoadConfig(path string) (*Config, error) {
+func loadConfig(path string) (*config, error) {
 	f, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var config Config
+	var config config
 	err = yaml.Unmarshal(f, &config)
 	if err != nil {
 		return nil, err

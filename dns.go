@@ -9,7 +9,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-type DNSHandler struct {
+type dnsHandler struct {
 	sync.RWMutex
 
 	zone string
@@ -17,14 +17,14 @@ type DNSHandler struct {
 	svcMap map[string]string
 }
 
-func NewDNSHandler(zone string) *DNSHandler {
-	return &DNSHandler{
+func newDNSHandler(zone string) *dnsHandler {
+	return &dnsHandler{
 		zone:   zone,
 		svcMap: make(map[string]string),
 	}
 }
 
-func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	msg := dns.Msg{}
 	msg.SetReply(r)
 	switch r.Question[0].Qtype {
@@ -53,7 +53,7 @@ func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(&msg)
 }
 
-func (h *DNSHandler) UpdateRecord(service string, records []string) {
+func (h *dnsHandler) UpdateRecord(service string, records []string) {
 	h.Lock()
 	defer h.Unlock()
 
