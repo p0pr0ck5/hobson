@@ -21,6 +21,10 @@ type dnsHandler struct {
 	shutdownCh chan struct{}
 }
 
+func newDNSServer(bind string) *dns.Server {
+	return &dns.Server{Addr: bind, Net: "udp"}
+}
+
 func newDNSHandler(zone string) *dnsHandler {
 	return &dnsHandler{
 		zone:       zone,

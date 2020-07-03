@@ -10,8 +10,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
-	"github.com/miekg/dns"
 )
 
 type recordEntry struct {
@@ -31,7 +29,7 @@ func main() {
 		log.Fatalln("Error loading config:", err)
 	}
 
-	srv := &dns.Server{Addr: config.Bind, Net: "udp"}
+	srv := newDNSServer(config.Bind)
 	h := newDNSHandler(config.Zone)
 	srv.Handler = h
 
