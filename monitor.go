@@ -27,8 +27,9 @@ func newMonitor(services []string) (*monitor, error) {
 	}
 
 	m := &monitor{
-		Services: services,
-		client:   client,
+		Services:   services,
+		client:     client,
+		shutdownCh: make(chan struct{}),
 	}
 
 	return m, nil

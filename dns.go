@@ -23,8 +23,9 @@ type dnsHandler struct {
 
 func newDNSHandler(zone string) *dnsHandler {
 	return &dnsHandler{
-		zone:   zone,
-		svcMap: make(map[string]string),
+		zone:       zone,
+		svcMap:     make(map[string]string),
+		shutdownCh: make(chan struct{}),
 	}
 }
 
