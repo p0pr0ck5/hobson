@@ -58,23 +58,25 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 }
 
 func (h *dnsHandler) Watch(notify <-chan *recordEntry) {
-	for {
-		select {
-		case <-h.shutdownCh:
-			return
-		default:
-			a := <-notify
-			t := a.Addresses
+	go func() {
+		for {
+			select {
+			case <-h.shutdownCh:
+				return
+			default:
+				a := <-notify
+				t := a.Addresses
 
-			if len(t) == 0 {
-				log.Printf("No records for service %q", a.Service)
-				continue
+				if len(t) == 0 {
+					log.Printf("No records for service %q", a.Service)
+					continue
+				}
+
+				sort.Strings(t)
+				h.UpdateRecord(a.Service, t)
 			}
-
-			sort.Strings(t)
-			h.UpdateRecord(a.Service, t)
 		}
-	}
+	}()
 }
 
 func (h *dnsHandler) Shutdown(ctx context.Context) error {
