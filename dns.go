@@ -12,7 +12,7 @@ import (
 )
 
 type dnsHandler struct {
-	sync.RWMutex
+	mu sync.RWMutex
 
 	zone string
 
@@ -41,9 +41,9 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		msg.Authoritative = true
 		domain := msg.Question[0].Name
 
-		h.RLock()
+		h.mu.RLock()
 		address, ok := h.svcMap[domain]
-		h.RUnlock()
+		h.mu.RUnlock()
 		if !ok {
 			msg.SetRcode(r, dns.RcodeNameError)
 			break
@@ -89,8 +89,8 @@ func (h *dnsHandler) Shutdown(ctx context.Context) error {
 }
 
 func (h *dnsHandler) UpdateRecord(service string, records []string) {
-	h.Lock()
-	defer h.Unlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
 	rec := fmt.Sprintf("%s.%s.", service, h.zone)
 	cur := h.svcMap[rec]
