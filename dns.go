@@ -73,7 +73,6 @@ func (h *dnsHandler) Watch(notify <-chan *recordEntry) {
 					continue
 				}
 
-				sort.Strings(t)
 				h.UpdateRecord(a.Service, t)
 			}
 		}
@@ -98,6 +97,7 @@ func (h *dnsHandler) UpdateRecord(service string, records []string) {
 		}
 	}
 
+	sort.Strings(records)
 	newRecord := records[0]
 	log.Printf("Updating service map record %s (%s)", service, newRecord)
 	h.svcMap[rec] = newRecord
