@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -16,7 +17,7 @@ type dnsHandler struct {
 
 	zone string
 
-	svcMap map[string]string
+	svcMap map[string]net.IP
 
 	shutdownCh chan struct{}
 }
@@ -28,7 +29,7 @@ func newDNSServer(bind string) *dns.Server {
 func newDNSHandler(zone string) *dnsHandler {
 	return &dnsHandler{
 		zone:       zone,
-		svcMap:     make(map[string]string),
+		svcMap:     make(map[string]net.IP),
 		shutdownCh: make(chan struct{}),
 	}
 }
@@ -56,7 +57,7 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 				Class:  dns.ClassINET,
 				Ttl:    0,
 			},
-			A: net.ParseIP(address),
+			A: address,
 		})
 	}
 	w.WriteMsg(&msg)
@@ -95,7 +96,7 @@ func (h *dnsHandler) UpdateRecord(service string, records []string) {
 	cur := h.svcMap[rec]
 
 	for _, record := range records {
-		if cur == record {
+		if bytes.Compare(net.ParseIP(record), cur) == 0 {
 			return
 		}
 	}
@@ -103,5 +104,5 @@ func (h *dnsHandler) UpdateRecord(service string, records []string) {
 	sort.Strings(records)
 	newRecord := records[0]
 	log.Printf("Updating service map record %s (%s)", service, newRecord)
-	h.svcMap[rec] = newRecord
+	h.svcMap[rec] = net.ParseIP(newRecord)
 }
