@@ -18,6 +18,9 @@ type monitor struct {
 	client *api.Client
 
 	shutdownCh chan struct{}
+
+	backoff func(*uint64)
+	reset   func(*uint64)
 }
 
 func newMonitor(services []string) (*monitor, error) {
@@ -32,7 +35,23 @@ func newMonitor(services []string) (*monitor, error) {
 		shutdownCh: make(chan struct{}),
 	}
 
+	backoff, reset := backoffFuncs()
+	m.backoff = backoff
+	m.reset = reset
+
 	return m, nil
+}
+
+func backoffFuncs() (func(*uint64), func(*uint64)) {
+	backoff := func(n *uint64) {
+		*n++
+		sleep := math.Min(math.Pow(2, float64(*n))*backoffBase, backoffMax)
+		time.Sleep(time.Millisecond * time.Duration(sleep))
+	}
+	reset := func(n *uint64) {
+		*n = 0
+	}
+	return backoff, reset
 }
 
 func (m *monitor) monitorService(service string, notify chan<- *recordEntry) {
@@ -47,12 +66,10 @@ func (m *monitor) monitorService(service string, notify chan<- *recordEntry) {
 		if err != nil {
 			log.Println(err)
 			consulMonitorError.WithLabelValues(service).Inc()
-			n++
-			sleep := math.Min(math.Pow(2, float64(n))*backoffBase, backoffMax)
-			time.Sleep(time.Millisecond * time.Duration(sleep))
+			m.backoff(&n)
 			continue
 		}
-		n = 0
+		m.reset(&n)
 
 		if meta != nil {
 			wait = meta.LastIndex
