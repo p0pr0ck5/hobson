@@ -32,6 +32,7 @@ $ ./hobson -config ./hobson.yaml
 The config file expects the following elements:
 
 * **bind**: The address and port to which to bind the DNS server.
+* **prometheus_bind**: The address and port to which to bind the Prometheus metrics exposition HTTP endpoint.
 * **zone**: The zone under which to service DNS names.
 * **services**: A list of Consul service names to watch and return records for.
 
