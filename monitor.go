@@ -13,7 +13,7 @@ const backoffMax = 30000
 const backoffBase = 500
 
 type monitor struct {
-	Services []string
+	services []string
 
 	client *api.Client
 
@@ -27,7 +27,7 @@ func newMonitor(services []string) (*monitor, error) {
 	}
 
 	m := &monitor{
-		Services:   services,
+		services:   services,
 		client:     client,
 		shutdownCh: make(chan struct{}),
 	}
@@ -62,14 +62,14 @@ func (m *monitor) monitorService(service string, notify chan<- *recordEntry) {
 		}
 
 		notify <- &recordEntry{
-			Addresses: a,
-			Service:   service,
+			addresses: a,
+			service:   service,
 		}
 	}
 }
 
 func (m *monitor) Run(notify chan<- *recordEntry) {
-	for _, svc := range m.Services {
+	for _, svc := range m.services {
 		go m.monitorService(svc, notify)
 	}
 }

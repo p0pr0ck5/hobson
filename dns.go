@@ -69,14 +69,14 @@ func (h *dnsHandler) Watch(notify <-chan *recordEntry) {
 			case <-h.shutdownCh:
 				return
 			case a := <-notify:
-				t := a.Addresses
+				t := a.addresses
 
 				if len(t) == 0 {
-					log.Printf("No records for service %q", a.Service)
+					log.Printf("No records for service %q", a.service)
 					continue
 				}
 
-				h.UpdateRecord(a.Service, t)
+				h.UpdateRecord(a.service, t)
 			}
 		}
 	}()

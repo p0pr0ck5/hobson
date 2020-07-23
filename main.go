@@ -13,8 +13,8 @@ import (
 )
 
 type recordEntry struct {
-	Addresses []string
-	Service   string
+	addresses []string
+	service   string
 }
 
 func main() {
