@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -53,6 +54,15 @@ func main() {
 	m.Run(notify)
 	h.Watch(notify)
 
+	p := newMetricsHandler(config.PromBind)
+	p.RegisterPrometheus()
+	go func() {
+		log.Println("Exporting Prometheus metrics on", config.PromBind)
+		if err := p.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalln("Failed to start Prometheus exposition server:", err)
+		}
+	}()
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
@@ -85,6 +95,14 @@ func main() {
 			defer wg.Done()
 			if err := m.Shutdown(ctx); err != nil {
 				log.Println("Error shutting down monitor:", err)
+			}
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := p.Shutdown(ctx); err != nil {
+				log.Println("Error shutting down Prometheus exposition server:", err)
 			}
 		}()
 

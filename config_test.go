@@ -15,8 +15,9 @@ func Test_validateConfig(t *testing.T) {
 			"valid config",
 			args{
 				c: &config{
-					Bind: ":5300",
-					Zone: "foo",
+					Bind:     ":5300",
+					PromBind: ":5301",
+					Zone:     "foo",
 					Services: []string{
 						"bar",
 					},
@@ -28,6 +29,20 @@ func Test_validateConfig(t *testing.T) {
 			"missing Bind",
 			args{
 				c: &config{
+					PromBind: ":5301",
+					Zone:     "foo",
+					Services: []string{
+						"bar",
+					},
+				},
+			},
+			true,
+		},
+		{
+			"missing PromBind",
+			args{
+				c: &config{
+					Bind: ":5300",
 					Zone: "foo",
 					Services: []string{
 						"bar",
@@ -40,7 +55,8 @@ func Test_validateConfig(t *testing.T) {
 			"missing Zone",
 			args{
 				c: &config{
-					Bind: ":5300",
+					Bind:     ":5300",
+					PromBind: ":5301",
 					Services: []string{
 						"bar",
 					},
@@ -52,8 +68,9 @@ func Test_validateConfig(t *testing.T) {
 			"missing Services",
 			args{
 				c: &config{
-					Bind: ":5300",
-					Zone: "foo",
+					Bind:     ":5300",
+					PromBind: ":5301",
+					Zone:     "foo",
 				},
 			},
 			true,
@@ -62,8 +79,9 @@ func Test_validateConfig(t *testing.T) {
 			"valid config with multiple services",
 			args{
 				c: &config{
-					Bind: ":5300",
-					Zone: "foo",
+					Bind:     ":5300",
+					PromBind: ":5301",
+					Zone:     "foo",
 					Services: []string{
 						"foo",
 						"bar",
@@ -76,8 +94,9 @@ func Test_validateConfig(t *testing.T) {
 			"valid config with duplicate services",
 			args{
 				c: &config{
-					Bind: ":5300",
-					Zone: "foo",
+					Bind:     ":5300",
+					PromBind: ":5301",
+					Zone:     "foo",
 					Services: []string{
 						"bar",
 						"bar",

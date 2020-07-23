@@ -7,9 +7,11 @@ import (
 	"log"
 	"net"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/miekg/dns"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type dnsHandler struct {
@@ -35,6 +37,9 @@ func newDNSHandler(zone string) *dnsHandler {
 }
 
 func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+	timer := prometheus.NewTimer(queryHandleDuration)
+	defer timer.ObserveDuration()
+
 	msg := dns.Msg{}
 	msg.SetReply(r)
 	switch r.Question[0].Qtype {
@@ -46,6 +51,7 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 		address, ok := h.svcMap[domain]
 		h.mu.RUnlock()
 		if !ok {
+			queryUnknownName.Inc()
 			msg.SetRcode(r, dns.RcodeNameError)
 			break
 		}
@@ -59,6 +65,7 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 			},
 			A: address,
 		})
+		recordServed.WithLabelValues(strings.Split(domain, ".")[0]).Inc() // TODO clean this up
 	}
 	w.WriteMsg(&msg)
 }
@@ -105,4 +112,5 @@ func (h *dnsHandler) UpdateRecord(service string, records []string) {
 	newRecord := records[0]
 	log.Printf("Updating service map record %s (%s)", service, newRecord)
 	h.svcMap[rec] = net.ParseIP(newRecord)
+	recordUpdateTime.WithLabelValues(service).SetToCurrentTime()
 }
