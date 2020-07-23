@@ -68,8 +68,7 @@ func (h *dnsHandler) Watch(notify <-chan *recordEntry) {
 			select {
 			case <-h.shutdownCh:
 				return
-			default:
-				a := <-notify
+			case a := <-notify:
 				t := a.Addresses
 
 				if len(t) == 0 {
