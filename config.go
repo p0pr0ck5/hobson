@@ -13,6 +13,20 @@ type config struct {
 	Services []string `yaml:"services"`
 }
 
+func hasDuplicate(haystack []string) bool {
+	m := make(map[string]bool)
+
+	for _, s := range haystack {
+		if _, found := m[s]; found == true {
+			return true
+		}
+
+		m[s] = true
+	}
+
+	return false
+}
+
 func validateConfig(c *config) error {
 	if c.Bind == "" {
 		return errors.New("'Bind' is not set")
@@ -24,6 +38,10 @@ func validateConfig(c *config) error {
 
 	if len(c.Services) == 0 {
 		return errors.New("'Services' must be defined")
+	}
+
+	if hasDuplicate(c.Services) {
+		return errors.New("'Services' contains duplicate entries")
 	}
 
 	return nil

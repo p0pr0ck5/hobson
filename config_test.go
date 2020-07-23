@@ -84,7 +84,7 @@ func Test_validateConfig(t *testing.T) {
 					},
 				},
 			},
-			false,
+			true,
 		},
 	}
 	for _, tt := range tests {
