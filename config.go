@@ -9,6 +9,7 @@ import (
 
 type config struct {
 	Bind     string   `yaml:"bind"`
+	PromBind string   `yaml:"prometheus_bind"`
 	Zone     string   `yaml:"zone"`
 	Services []string `yaml:"services"`
 }
@@ -30,6 +31,10 @@ func hasDuplicate(haystack []string) bool {
 func validateConfig(c *config) error {
 	if c.Bind == "" {
 		return errors.New("'Bind' is not set")
+	}
+
+	if c.PromBind == "" {
+		return errors.New("'PromBind' is not set")
 	}
 
 	if c.Zone == "" {

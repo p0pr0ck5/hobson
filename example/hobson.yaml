@@ -1,4 +1,5 @@
 bind: :5300
+prometheus_bind: :5301
 zone: foo
 services:
   - consul

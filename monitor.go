@@ -46,6 +46,7 @@ func (m *monitor) monitorService(service string, notify chan<- *recordEntry) {
 		})
 		if err != nil {
 			log.Println(err)
+			consulMonitorError.WithLabelValues(service).Inc()
 			n++
 			sleep := math.Min(math.Pow(2, float64(n))*backoffBase, backoffMax)
 			time.Sleep(time.Millisecond * time.Duration(sleep))
