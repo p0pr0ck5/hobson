@@ -172,7 +172,152 @@ func Test_dnsHandler_ServeDNS(t *testing.T) {
 
 				a := w.GetM().Answer[0].(*dns.A).A
 				if bytes.Compare(a, net.ParseIP(MockRR(tt.answer.expectedAnswer).String())) != 0 {
-					t.Errorf("got %v, expected %v", a, MockRR(tt.answer.expectedAnswer).String())
+					t.Errorf("ServeDNS() got %v, expected %v", a, MockRR(tt.answer.expectedAnswer).String())
+				}
+			}
+		})
+	}
+}
+
+func Test_dnsHandler_UpdateRecord(t *testing.T) {
+	type fields struct {
+		zone       string
+		svcMap     map[string]net.IP
+		shutdownCh chan struct{}
+	}
+	type args struct {
+		service string
+		records []string
+	}
+	type expected map[string]net.IP
+	tests := []struct {
+		name     string
+		fields   fields
+		args     args
+		expected expected
+	}{
+		{
+			"add single record for non existing entry",
+			fields{
+				zone:   "foo",
+				svcMap: make(map[string]net.IP),
+			},
+			args{
+				service: "bar",
+				records: []string{"127.0.0.1"},
+			},
+			map[string]net.IP{
+				"bar.foo.": net.ParseIP("127.0.0.1"),
+			},
+		},
+		{
+			"add multiple records for non existing entry",
+			fields{
+				zone:   "foo",
+				svcMap: make(map[string]net.IP),
+			},
+			args{
+				service: "bar",
+				records: []string{"127.0.0.1", "127.0.0.2"},
+			},
+			map[string]net.IP{
+				"bar.foo.": net.ParseIP("127.0.0.1"),
+			},
+		},
+		{
+			"add single record for existing entry (current)",
+			fields{
+				zone: "foo",
+				svcMap: map[string]net.IP{
+					"bar.foo.": net.ParseIP("127.0.0.1"),
+				},
+			},
+			args{
+				service: "bar",
+				records: []string{"127.0.0.1"},
+			},
+			map[string]net.IP{
+				"bar.foo.": net.ParseIP("127.0.0.1"),
+			},
+		},
+		{
+			"add single record for existing entry (new)",
+			fields{
+				zone: "foo",
+				svcMap: map[string]net.IP{
+					"bar.foo.": net.ParseIP("127.0.0.1"),
+				},
+			},
+			args{
+				service: "bar",
+				records: []string{"127.0.0.2"},
+			},
+			map[string]net.IP{
+				"bar.foo.": net.ParseIP("127.0.0.2"),
+			},
+		},
+		{
+			"add single record for existing entry (lexical sort)",
+			fields{
+				zone: "foo",
+				svcMap: map[string]net.IP{
+					"bar.foo.": net.ParseIP("127.0.0.2"),
+				},
+			},
+			args{
+				service: "bar",
+				records: []string{"127.0.0.1"},
+			},
+			map[string]net.IP{
+				"bar.foo.": net.ParseIP("127.0.0.1"),
+			},
+		},
+		{
+			"add multiple records for existing entry (lexical sort)",
+			fields{
+				zone: "foo",
+				svcMap: map[string]net.IP{
+					"bar.foo.": net.ParseIP("127.0.0.2"),
+				},
+			},
+			args{
+				service: "bar",
+				records: []string{"127.0.0.1", "127.0.0.2"},
+			},
+			map[string]net.IP{
+				"bar.foo.": net.ParseIP("127.0.0.2"),
+			},
+		},
+		{
+			"add multiple records for existing entry (lexical sort with current record)",
+			fields{
+				zone: "foo",
+				svcMap: map[string]net.IP{
+					"bar.foo.": net.ParseIP("127.0.0.2"),
+				},
+			},
+			args{
+				service: "bar",
+				records: []string{"127.0.0.2", "127.0.0.1"},
+			},
+			map[string]net.IP{
+				"bar.foo.": net.ParseIP("127.0.0.2"),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &dnsHandler{
+				zone:       tt.fields.zone,
+				svcMap:     tt.fields.svcMap,
+				shutdownCh: tt.fields.shutdownCh,
+			}
+			h.UpdateRecord(tt.args.service, tt.args.records)
+
+			for k, bytes := range tt.expected {
+				found := h.svcMap[k]
+				if !found.Equal(bytes) {
+					t.Errorf("UpdateRecord() expected to set %v, saw %v", bytes, found)
 				}
 			}
 		})
