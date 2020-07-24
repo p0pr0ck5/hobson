@@ -43,7 +43,7 @@ func main() {
 	}()
 
 	notify := make(chan *recordEntry)
-	m, err := newMonitor(config.Services)
+	m, err := NewMonitor(config.Services)
 	if err != nil {
 		log.Fatalln("Failed to setup monitor:", err)
 	}
