@@ -13,11 +13,6 @@ import (
 	"time"
 )
 
-type recordEntry struct {
-	addresses []string
-	service   string
-}
-
 func main() {
 	configPath := flag.String("config", "", "Config file path")
 	flag.Parse()
@@ -30,8 +25,8 @@ func main() {
 		log.Fatalln("Error loading config:", err)
 	}
 
-	srv := newDNSServer(config.Bind)
-	h := newDNSHandler(config.Zone)
+	srv := NewDNSServer(config.Bind)
+	h := NewDNSHandler(config.Zone)
 	srv.Handler = h
 
 	go func() {
@@ -42,7 +37,7 @@ func main() {
 		}
 	}()
 
-	notify := make(chan *recordEntry)
+	notify := make(chan *RecordEntry)
 	m, err := NewMonitor(config.Services)
 	if err != nil {
 		log.Fatalln("Failed to setup monitor:", err)

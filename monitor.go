@@ -58,7 +58,7 @@ func backoffFuncs() (func(*uint64), func(*uint64)) {
 	return backoff, reset
 }
 
-func (m *Monitor) monitorService(service string, notify chan<- *recordEntry) {
+func (m *Monitor) monitorService(service string, notify chan<- *RecordEntry) {
 	var wait, n uint64
 
 	for {
@@ -83,7 +83,7 @@ func (m *Monitor) monitorService(service string, notify chan<- *recordEntry) {
 			a = append(a, svc.Node.Address)
 		}
 
-		notify <- &recordEntry{
+		notify <- &RecordEntry{
 			addresses: a,
 			service:   service,
 		}
@@ -91,7 +91,7 @@ func (m *Monitor) monitorService(service string, notify chan<- *recordEntry) {
 }
 
 // Run spawns a goroutine to watch the addresses for each associated Consul service
-func (m *Monitor) Run(notify chan<- *recordEntry) {
+func (m *Monitor) Run(notify chan<- *RecordEntry) {
 	for _, svc := range m.services {
 		go m.monitorService(svc, notify)
 	}

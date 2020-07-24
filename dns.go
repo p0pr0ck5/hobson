@@ -14,7 +14,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type dnsHandler struct {
+// RecordEntry associated a set of DNS records with a given Consul service
+type RecordEntry struct {
+	addresses []string
+	service   string
+}
+
+// DNSHandler stores DNS record information for monitored Consul services, and implement
+// dns.ServeDNS()
+type DNSHandler struct {
 	mu sync.RWMutex
 
 	zone string
@@ -24,19 +32,23 @@ type dnsHandler struct {
 	shutdownCh chan struct{}
 }
 
-func newDNSServer(bind string) *dns.Server {
+// NewDNSServer creates a new dns.Server on a given address
+func NewDNSServer(bind string) *dns.Server {
 	return &dns.Server{Addr: bind, Net: "udp"}
 }
 
-func newDNSHandler(zone string) *dnsHandler {
-	return &dnsHandler{
+// NewDNSHandler creates a new DNSHandler object for a given zone
+func NewDNSHandler(zone string) *DNSHandler {
+	return &DNSHandler{
 		zone:       zone,
 		svcMap:     make(map[string]net.IP),
 		shutdownCh: make(chan struct{}),
 	}
 }
 
-func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
+// ServeDNS implements dns.ServeDNS, which responds to DNS queries
+// on a given dns.Server
+func (h *DNSHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	timer := prometheus.NewTimer(queryHandleDuration)
 	defer timer.ObserveDuration()
 
@@ -70,7 +82,9 @@ func (h *dnsHandler) ServeDNS(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(&msg)
 }
 
-func (h *dnsHandler) Watch(notify <-chan *recordEntry) {
+// Watch spawns a goroutine to listen for messages on a channel that indicate
+// an update to a service's record set has occured
+func (h *DNSHandler) Watch(notify <-chan *RecordEntry) {
 	go func() {
 		for {
 			select {
@@ -90,12 +104,18 @@ func (h *dnsHandler) Watch(notify <-chan *recordEntry) {
 	}()
 }
 
-func (h *dnsHandler) Shutdown(ctx context.Context) error {
+// Shutdown ends DNSHandler activity
+func (h *DNSHandler) Shutdown(ctx context.Context) error {
 	close(h.shutdownCh)
 	return nil
 }
 
-func (h *dnsHandler) UpdateRecord(service string, records []string) {
+// UpdateRecord updates the record value that hobson will serve for a
+// given service. In order to avoid unnecessary flapping during service
+// health/registration churn, UpdateRecord will only update the record
+// value when the candidate record in a given set of records is not the
+// current record value.
+func (h *DNSHandler) UpdateRecord(service string, records []string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
