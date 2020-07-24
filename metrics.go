@@ -49,11 +49,14 @@ var (
 	)
 )
 
-type metricsHandler struct {
+// MetricsHandler wraps a Prometheus metrics exporter
+type MetricsHandler struct {
 	http *http.Server
 }
 
-func newMetricsHandler(bind string) *metricsHandler {
+// NewMetricsHandler creates a MetricsHandler object and prepares a Prometheus
+// metrics exposition handler
+func NewMetricsHandler(bind string) *MetricsHandler {
 	prom := promhttp.Handler()
 
 	http.HandleFunc("/metrics", prom.ServeHTTP)
@@ -72,12 +75,14 @@ func newMetricsHandler(bind string) *metricsHandler {
 		Addr: bind,
 	}
 
-	return &metricsHandler{
+	return &MetricsHandler{
 		http: httpServer,
 	}
 }
 
-func (m *metricsHandler) RegisterPrometheus() {
+// RegisterPrometheus registers the current global Prometheus metrics variables
+// into the global Prometheus registry within hobson
+func (m *MetricsHandler) RegisterPrometheus() {
 	prometheus.MustRegister(
 		consulMonitorError,
 		queryHandleDuration,
@@ -87,10 +92,12 @@ func (m *metricsHandler) RegisterPrometheus() {
 	)
 }
 
-func (m *metricsHandler) ListenAndServe() error {
+// ListenAndServe wraps the underlying net/http ListenAndServe call
+func (m *MetricsHandler) ListenAndServe() error {
 	return m.http.ListenAndServe()
 }
 
-func (m *metricsHandler) Shutdown(ctx context.Context) error {
+// Shutdown wraps the underlying net/http Shutdown call
+func (m *MetricsHandler) Shutdown(ctx context.Context) error {
 	return m.http.Shutdown(ctx)
 }

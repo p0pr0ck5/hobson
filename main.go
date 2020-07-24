@@ -13,11 +13,6 @@ import (
 	"time"
 )
 
-type recordEntry struct {
-	addresses []string
-	service   string
-}
-
 func main() {
 	configPath := flag.String("config", "", "Config file path")
 	flag.Parse()
@@ -25,13 +20,13 @@ func main() {
 		log.Fatalln("-config must be set")
 	}
 
-	config, err := loadConfig(*configPath)
+	config, err := NewConfig(*configPath)
 	if err != nil {
 		log.Fatalln("Error loading config:", err)
 	}
 
-	srv := newDNSServer(config.Bind)
-	h := newDNSHandler(config.Zone)
+	srv := NewDNSServer(config.Bind)
+	h := NewDNSHandler(config.Zone)
 	srv.Handler = h
 
 	go func() {
@@ -42,8 +37,8 @@ func main() {
 		}
 	}()
 
-	notify := make(chan *recordEntry)
-	m, err := newMonitor(config.Services)
+	notify := make(chan *RecordEntry)
+	m, err := NewMonitor(config.Services)
 	if err != nil {
 		log.Fatalln("Failed to setup monitor:", err)
 	}
@@ -54,7 +49,7 @@ func main() {
 	m.Run(notify)
 	h.Watch(notify)
 
-	p := newMetricsHandler(config.PromBind)
+	p := NewMetricsHandler(config.PromBind)
 	p.RegisterPrometheus()
 	go func() {
 		log.Println("Exporting Prometheus metrics on", config.PromBind)

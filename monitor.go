@@ -12,7 +12,9 @@ import (
 const backoffMax = 30000
 const backoffBase = 500
 
-type monitor struct {
+// Monitor provides the ability to watch a number of Consul services and communicate
+// the associated healthy services to a channel-based consumer
+type Monitor struct {
 	services []string
 
 	client *api.Client
@@ -23,13 +25,15 @@ type monitor struct {
 	reset   func(*uint64)
 }
 
-func newMonitor(services []string) (*monitor, error) {
+// NewMonitor creates a new Monitor object, given a set of Consul
+// services to monitor
+func NewMonitor(services []string) (*Monitor, error) {
 	client, err := api.NewClient(api.DefaultConfig())
 	if err != nil {
 		return nil, err
 	}
 
-	m := &monitor{
+	m := &Monitor{
 		services:   services,
 		client:     client,
 		shutdownCh: make(chan struct{}),
@@ -54,7 +58,7 @@ func backoffFuncs() (func(*uint64), func(*uint64)) {
 	return backoff, reset
 }
 
-func (m *monitor) monitorService(service string, notify chan<- *recordEntry) {
+func (m *Monitor) monitorService(service string, notify chan<- *RecordEntry) {
 	var wait, n uint64
 
 	for {
@@ -79,20 +83,22 @@ func (m *monitor) monitorService(service string, notify chan<- *recordEntry) {
 			a = append(a, svc.Node.Address)
 		}
 
-		notify <- &recordEntry{
+		notify <- &RecordEntry{
 			addresses: a,
 			service:   service,
 		}
 	}
 }
 
-func (m *monitor) Run(notify chan<- *recordEntry) {
+// Run spawns a goroutine to watch the addresses for each associated Consul service
+func (m *Monitor) Run(notify chan<- *RecordEntry) {
 	for _, svc := range m.services {
 		go m.monitorService(svc, notify)
 	}
 }
 
-func (m *monitor) Shutdown(ctx context.Context) error {
+// Shutdown ends monitoring activity
+func (m *Monitor) Shutdown(ctx context.Context) error {
 	close(m.shutdownCh)
 	return nil
 }

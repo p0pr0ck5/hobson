@@ -7,7 +7,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type config struct {
+// Config details how hobson should operate
+type Config struct {
 	Bind     string   `yaml:"bind"`
 	PromBind string   `yaml:"prometheus_bind"`
 	Zone     string   `yaml:"zone"`
@@ -28,7 +29,29 @@ func hasDuplicate(haystack []string) bool {
 	return false
 }
 
-func validateConfig(c *config) error {
+// NewConfig creates and validate a new Config object, given a specified filesystem path
+func NewConfig(path string) (*Config, error) {
+	f, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var config Config
+	err = yaml.Unmarshal(f, &config)
+	if err != nil {
+		return nil, err
+	}
+
+	err = config.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
+// Validate returns an error if an invalid configuration is present in the Config
+func (c *Config) Validate() error {
 	if c.Bind == "" {
 		return errors.New("'Bind' is not set")
 	}
@@ -50,24 +73,4 @@ func validateConfig(c *config) error {
 	}
 
 	return nil
-}
-
-func loadConfig(path string) (*config, error) {
-	f, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var config config
-	err = yaml.Unmarshal(f, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	err = validateConfig(&config)
-	if err != nil {
-		return nil, err
-	}
-
-	return &config, nil
 }
