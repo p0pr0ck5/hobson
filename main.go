@@ -54,7 +54,7 @@ func main() {
 	m.Run(notify)
 	h.Watch(notify)
 
-	p := newMetricsHandler(config.PromBind)
+	p := NewMetricsHandler(config.PromBind)
 	p.RegisterPrometheus()
 	go func() {
 		log.Println("Exporting Prometheus metrics on", config.PromBind)
