@@ -1,106 +1,97 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
-func Test_validateConfig(t *testing.T) {
-	type args struct {
-		c *config
+func TestConfig_Validate(t *testing.T) {
+	type fields struct {
+		Bind     string
+		PromBind string
+		Zone     string
+		Services []string
 	}
 	tests := []struct {
 		name    string
-		args    args
+		fields  fields
 		wantErr bool
 	}{
 		{
 			"valid config",
-			args{
-				c: &config{
-					Bind:     ":5300",
-					PromBind: ":5301",
-					Zone:     "foo",
-					Services: []string{
-						"bar",
-					},
+			fields{
+				Bind:     ":5300",
+				PromBind: ":5301",
+				Zone:     "foo",
+				Services: []string{
+					"bar",
 				},
 			},
 			false,
 		},
 		{
 			"missing Bind",
-			args{
-				c: &config{
-					PromBind: ":5301",
-					Zone:     "foo",
-					Services: []string{
-						"bar",
-					},
+			fields{
+				PromBind: ":5301",
+				Zone:     "foo",
+				Services: []string{
+					"bar",
 				},
 			},
 			true,
 		},
 		{
 			"missing PromBind",
-			args{
-				c: &config{
-					Bind: ":5300",
-					Zone: "foo",
-					Services: []string{
-						"bar",
-					},
+			fields{
+				Bind: ":5300",
+				Zone: "foo",
+				Services: []string{
+					"bar",
 				},
 			},
 			true,
 		},
 		{
 			"missing Zone",
-			args{
-				c: &config{
-					Bind:     ":5300",
-					PromBind: ":5301",
-					Services: []string{
-						"bar",
-					},
+			fields{
+				Bind:     ":5300",
+				PromBind: ":5301",
+				Services: []string{
+					"bar",
 				},
 			},
 			true,
 		},
 		{
 			"missing Services",
-			args{
-				c: &config{
-					Bind:     ":5300",
-					PromBind: ":5301",
-					Zone:     "foo",
-				},
+			fields{
+				Bind:     ":5300",
+				PromBind: ":5301",
+				Zone:     "foo",
 			},
 			true,
 		},
 		{
-			"valid config with multiple services",
-			args{
-				c: &config{
-					Bind:     ":5300",
-					PromBind: ":5301",
-					Zone:     "foo",
-					Services: []string{
-						"foo",
-						"bar",
-					},
+			"valid Config with multiple services",
+			fields{
+				Bind:     ":5300",
+				PromBind: ":5301",
+				Zone:     "foo",
+				Services: []string{
+					"foo",
+					"bar",
 				},
 			},
 			false,
 		},
 		{
-			"valid config with duplicate services",
-			args{
-				c: &config{
-					Bind:     ":5300",
-					PromBind: ":5301",
-					Zone:     "foo",
-					Services: []string{
-						"bar",
-						"bar",
-					},
+			"valid Config with duplicate services",
+			fields{
+				Bind:     ":5300",
+				PromBind: ":5301",
+				Zone:     "foo",
+				Services: []string{
+					"bar",
+					"bar",
 				},
 			},
 			true,
@@ -108,8 +99,14 @@ func Test_validateConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := validateConfig(tt.args.c); (err != nil) != tt.wantErr {
-				t.Errorf("validateConfig() error = %v, wantErr %v", err, tt.wantErr)
+			c := &Config{
+				Bind:     tt.fields.Bind,
+				PromBind: tt.fields.PromBind,
+				Zone:     tt.fields.Zone,
+				Services: tt.fields.Services,
+			}
+			if err := c.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("Config.Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

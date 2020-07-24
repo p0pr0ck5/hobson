@@ -25,7 +25,7 @@ func main() {
 		log.Fatalln("-config must be set")
 	}
 
-	config, err := loadConfig(*configPath)
+	config, err := NewConfig(*configPath)
 	if err != nil {
 		log.Fatalln("Error loading config:", err)
 	}
