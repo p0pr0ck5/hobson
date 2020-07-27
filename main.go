@@ -39,6 +39,7 @@ func main() {
 
 	notify := make(chan *RecordEntry)
 	m, err := NewMonitor(config.Services)
+	m.Fetcher = NewConsulFetcher
 	if err != nil {
 		log.Fatalln("Failed to setup monitor:", err)
 	}
@@ -46,7 +47,10 @@ func main() {
 	log.Printf("Beginning monitoring of Consul services (%s)",
 		strings.Join(config.Services, ","))
 
-	m.Run(notify)
+	err = m.Run(notify)
+	if err != nil {
+		log.Fatalln("Failed to monitor services:", err)
+	}
 	h.Watch(notify)
 
 	p := NewMetricsHandler(config.PromBind)
