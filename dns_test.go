@@ -101,7 +101,7 @@ func Test_dnsHandler_ServeDNS(t *testing.T) {
 				w: NewMockResponseWriter(),
 				r: &dns.Msg{
 					Question: []dns.Question{
-						dns.Question{
+						{
 							Qtype: dns.TypeA,
 							Name:  "bar.foo.",
 						},
@@ -129,7 +129,7 @@ func Test_dnsHandler_ServeDNS(t *testing.T) {
 				w: NewMockResponseWriter(),
 				r: &dns.Msg{
 					Question: []dns.Question{
-						dns.Question{
+						{
 							Qtype: dns.TypeA,
 							Name:  "nope.foo.",
 						},
